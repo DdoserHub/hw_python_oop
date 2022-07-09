@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import List
 
 
 @dataclass
@@ -20,14 +21,9 @@ class InfoMessage:
 
 class Training:
     """Базовый класс тренировки."""
-    M_IN_KM = 1000
-    LEN_STEP = 0.65
-    H_IN_S = 60
-    coeff_SWM = 1.1
-    coeff_RUN_1 = 18
-    coeff_RUN_2 = 20
-    coeff_WLK_1 = 0.035
-    coeff_WLK_2 = 0.029
+    M_IN_KM: int = 1000
+    LEN_STEP: float = 0.65
+    SECONDS: int = 60
 
     def __init__(self,
                  action: int,
@@ -48,7 +44,6 @@ class Training:
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
-        pass
 
     def show_training_info(self) -> InfoMessage:
         """Вернуть информационное сообщение о выполненной тренировке."""
@@ -61,30 +56,35 @@ class Training:
 
 class Running(Training):
     """Тренировка: бег."""
-    def __init__(self, action, duration, weight):
-        super().__init__(action, duration, weight)
+    COEFF_CALORIE_1: int = 18
+    COEFF_CALORIE_2: int = 20
 
     def get_spent_calories(self) -> float:
-        return ((self.coeff_RUN_1 * self.get_mean_speed()
-                 - self.coeff_RUN_2) * self.weight
-                / self.M_IN_KM * self.duration * 60)
+        return ((self.COEFF_CALORIE_1 * self.get_mean_speed()
+                - self.COEFF_CALORIE_2) * self.weight
+                / self.M_IN_KM * self.duration * self.SECONDS)
 
 
 class SportsWalking(Training):
     """Тренировка: спортивная ходьба."""
+    COEFF_CALORIE_1: float = 0.035
+    COEFF_CALORIE_2: float = 0.029
+
     def __init__(self, action, duration, weight, height):
         super().__init__(action, duration, weight)
         self.height: float = height
 
     def get_spent_calories(self) -> float:
-        return (self.coeff_WLK_1 * self.weight
+        return ((self.COEFF_CALORIE_1 * self.weight
                 + (self.get_mean_speed() ** 2 // self.height)
-                * self.coeff_WLK_2 * self.weight) * self.duration * self.H_IN_S
+                * self.COEFF_CALORIE_2 * self.weight)
+                * self.duration * self.SECONDS)
 
 
 class Swimming(Training):
     """Тренировка: плавание."""
-    LEN_STEP = 1.38
+    LEN_STEP: float = 1.38
+    COEFF_CALORIE: float = 1.1
 
     def __init__(self, action, duration, weight, length_pool, count_pool):
         super().__init__(action, duration, weight)
@@ -95,32 +95,34 @@ class Swimming(Training):
         return self.action * self.LEN_STEP / self.M_IN_KM
 
     def get_mean_speed(self) -> float:
-        return (self.length_pool * self.count_pool
-                / self.M_IN_KM / self.duration)
+        return (self.length_pool
+                * self.count_pool / self.M_IN_KM / self.duration)
 
     def get_spent_calories(self) -> float:
-        return (self.get_mean_speed() + self.coeff_SWM) * 2 * self.weight
+        return (self.get_mean_speed() + self.COEFF_CALORIE) * 2 * self.weight
 
 
-def read_package(workout_type: str, data: list) -> Training:
+def read_package(workout_type: str, data: List[int]) -> Training:
     """Прочитать данные полученные от датчиков."""
     arr = {workout_type: data}
-    for key, value in arr.items():
-        if key == 'SWM':
-            swm = Swimming(value[0], value[1], value[2], value[3], value[4])
-            return swm
-        elif key == 'RUN':
-            run = Running(value[0], value[1], value[2])
-            return run
-        elif key == 'WLK':
-            wlk = SportsWalking(value[0], value[1], value[2], value[3])
-            return wlk
+    first, *remaining = data
+    if 'SWM' in arr:
+        return Swimming(first, *remaining)
+    elif 'RUN' in arr:
+        return Running(first, *remaining)
+    elif 'WLK' in arr:
+        return SportsWalking(first, *remaining)
+    else:
+        print('read_package(): Неверный ключ аргумента "workout_type"')
 
 
 def main(training: Training) -> None:
     """Главная функция."""
-    info = training.show_training_info().get_message()
-    print(info)
+    try:
+        info = training.show_training_info().get_message()
+        print(info)
+    except AttributeError:
+        print('def main(): Объект "Training" не создался')
 
 
 if __name__ == '__main__':
