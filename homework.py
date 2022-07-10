@@ -68,17 +68,17 @@ class Running(Training):
 
 class SportsWalking(Training):
     """Тренировка: спортивная ходьба."""
-    MULTIPLIER: float = 0.035
-    MULTIPLIER_2: float = 0.029
+    MULTIPLIER_FOR_WEIGHT: float = 0.035
+    MULTIPLIER_FOR_QUOTIENT: float = 0.029
 
     def __init__(self, action, duration, weight, height):
         super().__init__(action, duration, weight)
         self.height: float = height
 
     def get_spent_calories(self) -> float:
-        return ((self.MULTIPLIER * self.weight
+        return ((self.MULTIPLIER_FOR_WEIGHT * self.weight
                 + (self.get_mean_speed() ** 2 // self.height)
-                * self.MULTIPLIER_2 * self.weight)
+                * self.MULTIPLIER_FOR_QUOTIENT * self.weight)
                 * self.duration * self.SECONDS)
 
 
@@ -105,13 +105,12 @@ class Swimming(Training):
 
 def read_package(workout_type: str, data: List[int]) -> Training:
     """Прочитать данные полученные от датчиков."""
-    arr = {'SWM': Swimming,
-           'RUN': Running,
-           'WLK': SportsWalking}
-    if workout_type in arr:
-        return arr[workout_type](*data)
-    else:
-        raise ValueError('Значение переменной workout_type неизвестно')
+    case: [str, classmethod] = {'SWM': Swimming,
+                                'RUN': Running,
+                                'WLK': SportsWalking}
+    if workout_type in case:
+        return case[workout_type](*data)
+    raise ValueError('Значение переменной workout_type неизвестно')
 
 
 def main(training: Training) -> None:
