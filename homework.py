@@ -44,6 +44,7 @@ class Training:
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
+        raise NotImplementedError('Метод класса не переопределен')
 
     def show_training_info(self) -> InfoMessage:
         """Вернуть информационное сообщение о выполненной тренировке."""
@@ -56,35 +57,35 @@ class Training:
 
 class Running(Training):
     """Тренировка: бег."""
-    COEFF_CALORIE_1: int = 18
-    COEFF_CALORIE_2: int = 20
+    MULTIPLIER: int = 18
+    SUBTRAHEND: int = 20
 
     def get_spent_calories(self) -> float:
-        return ((self.COEFF_CALORIE_1 * self.get_mean_speed()
-                - self.COEFF_CALORIE_2) * self.weight
+        return ((self.MULTIPLIER * self.get_mean_speed()
+                - self.SUBTRAHEND) * self.weight
                 / self.M_IN_KM * self.duration * self.SECONDS)
 
 
 class SportsWalking(Training):
     """Тренировка: спортивная ходьба."""
-    COEFF_CALORIE_1: float = 0.035
-    COEFF_CALORIE_2: float = 0.029
+    MULTIPLIER: float = 0.035
+    MULTIPLIER_2: float = 0.029
 
     def __init__(self, action, duration, weight, height):
         super().__init__(action, duration, weight)
         self.height: float = height
 
     def get_spent_calories(self) -> float:
-        return ((self.COEFF_CALORIE_1 * self.weight
+        return ((self.MULTIPLIER * self.weight
                 + (self.get_mean_speed() ** 2 // self.height)
-                * self.COEFF_CALORIE_2 * self.weight)
+                * self.MULTIPLIER_2 * self.weight)
                 * self.duration * self.SECONDS)
 
 
 class Swimming(Training):
     """Тренировка: плавание."""
     LEN_STEP: float = 1.38
-    COEFF_CALORIE: float = 1.1
+    SUMMAND: float = 1.1
 
     def __init__(self, action, duration, weight, length_pool, count_pool):
         super().__init__(action, duration, weight)
@@ -99,30 +100,24 @@ class Swimming(Training):
                 * self.count_pool / self.M_IN_KM / self.duration)
 
     def get_spent_calories(self) -> float:
-        return (self.get_mean_speed() + self.COEFF_CALORIE) * 2 * self.weight
+        return (self.get_mean_speed() + self.SUMMAND) * 2 * self.weight
 
 
 def read_package(workout_type: str, data: List[int]) -> Training:
     """Прочитать данные полученные от датчиков."""
-    arr = {workout_type: data}
-    first, *remaining = data
-    if 'SWM' in arr:
-        return Swimming(first, *remaining)
-    elif 'RUN' in arr:
-        return Running(first, *remaining)
-    elif 'WLK' in arr:
-        return SportsWalking(first, *remaining)
+    arr = {'SWM': Swimming,
+           'RUN': Running,
+           'WLK': SportsWalking}
+    if workout_type in arr:
+        return arr[workout_type](*data)
     else:
-        print('read_package(): Неверный ключ аргумента "workout_type"')
+        raise ValueError('Значение переменной workout_type неизвестно')
 
 
 def main(training: Training) -> None:
     """Главная функция."""
-    try:
-        info = training.show_training_info().get_message()
-        print(info)
-    except AttributeError:
-        print('def main(): Объект "Training" не создался')
+    info = training.show_training_info().get_message()
+    print(info)
 
 
 if __name__ == '__main__':
