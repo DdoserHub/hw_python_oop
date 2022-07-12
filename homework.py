@@ -105,9 +105,9 @@ class Swimming(Training):
 
 def read_package(workout_type: str, data: List[int]) -> Training:
     """Прочитать данные полученные от датчиков."""
-    workouts: [str, type] = {'SWM': Swimming,
-                             'RUN': Running,
-                             'WLK': SportsWalking}
+    workouts: [str, Training] = {'SWM': Swimming,
+                                 'RUN': Running,
+                                 'WLK': SportsWalking}
     if workout_type in workouts:
         return workouts[workout_type](*data)
     raise ValueError('Значение переменной workout_type неизвестно')
